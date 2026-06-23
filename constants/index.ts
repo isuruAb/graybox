@@ -84,3 +84,32 @@ export const StatusIcon = {
   pending: "/assets/icons/pending.svg",
   cancelled: "/assets/icons/cancelled.svg",
 };
+
+export const AlertSeverityIcon = {
+  high: "/assets/icons/cancelled.svg",
+  medium: "/assets/icons/pending.svg",
+  low: "/assets/icons/check.svg",
+};
+
+export const AlertStatusIcon: Record<AlertStatus, string> = {
+  Open: "/assets/icons/pending.svg",
+  "In Progress": "/assets/icons/check-circle.svg",
+  Resolved: "/assets/icons/check.svg",
+};
+
+export const AlertTypes = [
+  "Medication Interaction",
+  "Abnormal Lab Result",
+  "Allergy Warning",
+  "Vital Sign Anomaly",
+  "Follow-up Required",
+  "Missed Appointment",
+];
+
+export const AlertSeverityOptions: AlertSeverity[] = ["high", "medium", "low"];
+
+export const AlertStatusOptions: AlertStatus[] = [
+  "Open",
+  "In Progress",
+  "Resolved",
+];

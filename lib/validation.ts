@@ -116,3 +116,17 @@ export function getAppointmentSchema(type: string) {
       return ScheduleAppointmentSchema;
   }
 }
+
+export const AlertFormValidation = z.object({
+  patientName: z.string().min(1, "Select a patient"),
+  alertType: z.string().min(2, "Select an alert type"),
+  severity: z.enum(["high", "medium", "low"]),
+  description: z
+    .string()
+    .min(5, "Description must be at least 5 characters")
+    .max(1000, "Description must be at most 1000 characters"),
+});
+
+export const AlertStatusEditValidation = z.object({
+  status: z.enum(["Open", "In Progress", "Resolved"]),
+});

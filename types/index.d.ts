@@ -7,6 +7,20 @@ declare type SearchParamProps = {
 
 declare type Gender = "Male" | "Female" | "Other";
 declare type Status = "pending" | "scheduled" | "cancelled";
+declare type AlertSeverity = "high" | "medium" | "low";
+declare type AlertStatus = "Open" | "In Progress" | "Resolved";
+
+declare interface CreateAlertParams {
+  patientName: string;
+  alertType: string;
+  severity: AlertSeverity;
+  description: string;
+}
+
+declare interface UpdateAlertParams {
+  alertId: string;
+  status: AlertStatus;
+}
 
 declare interface CreateUserParams {
   name: string;

@@ -34,3 +34,11 @@ export interface Appointment extends Models.Document {
   userId: string;
   cancellationReason: string | null;
 }
+
+export interface Alert extends Models.Document {
+  patientName: string;
+  alertType: string;
+  severity: AlertSeverity;
+  status: AlertStatus;
+  description: string;
+}
