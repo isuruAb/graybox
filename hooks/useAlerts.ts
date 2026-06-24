@@ -1,8 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { RealtimeResponseEvent } from "appwrite";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 import {
   createAlert,
@@ -36,23 +38,22 @@ export const useAlertsRealtime = () => {
   useEffect(() => {
     console.log("[realtime] subscribing to", ALERTS_CHANNEL);
 
-    const unsubscribe = client.subscribe<Alert>(ALERTS_CHANNEL, (response) => {
-      console.log("[realtime] event received", response.events, response.payload);
-
-      const alert = response.payload;
-
-      const isDeleted = response.events.some((event) =>
-        event.endsWith(".delete")
+    const unsubscribe = client.subscribe<Alert>(
+      ALERTS_CHANNEL,
+      (response: RealtimeResponseEvent<Alert>) => {
+      console.log(
+        "[realtime] event received",
+        response.events,
+        response.payload
       );
 
-      if (isDeleted) {
-        queryClient.removeQueries({ queryKey: alertKeys.detail(alert.$id) });
-      } else {
-        queryClient.setQueryData(alertKeys.detail(alert.$id), alert);
-      }
+        const alert = response.payload;
 
-      queryClient.invalidateQueries({ queryKey: alertKeys.list() });
-    });
+        queryClient.setQueryData(alertKeys.detail(alert.$id), alert);
+
+        queryClient.invalidateQueries({ queryKey: alertKeys.list() });
+      }
+    );
 
     return () => {
       console.log("[realtime] unsubscribing");
@@ -87,10 +88,18 @@ export const useCreateAlert = () => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (alert: CreateAlertParams) => createAlert(alert),
+    mutationFn: async (alert: CreateAlertParams) => {
+      const newAlert = await createAlert(alert);
+      if (!newAlert) throw new Error("Failed to create alert");
+      return newAlert;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: alertKeys.all });
+      toast.success("Alert created successfully");
       router.push("/admin/alert");
+    },
+    onError: () => {
+      toast.error("Failed to create alert. Please try again.");
     },
   });
 };
@@ -100,13 +109,21 @@ export const useUpdateAlert = () => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (params: UpdateAlertParams) => updateAlert(params),
+    mutationFn: async (params: UpdateAlertParams) => {
+      const updatedAlert = await updateAlert(params);
+      if (!updatedAlert) throw new Error("Failed to update alert");
+      return updatedAlert;
+    },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: alertKeys.all });
       queryClient.invalidateQueries({
         queryKey: alertKeys.detail(variables.alertId),
       });
+      toast.success("Alert updated successfully");
       router.push("/admin/alert");
+    },
+    onError: () => {
+      toast.error("Failed to update alert. Please try again.");
     },
   });
 };

@@ -22,7 +22,17 @@ const AdminPage = async () => {
           />
         </Link>
 
-        <p className="text-16-semibold">Admin Dashboard</p>
+        <nav className="flex items-center gap-6">
+          <Link href="/admin" className="text-16-semibold text-white">
+            Admin Dashboard
+          </Link>
+          <Link
+            href="/admin/alert"
+            className="text-16-semibold text-dark-700 transition-colors hover:text-white"
+          >
+            Alerts
+          </Link>
+        </nav>
       </header>
 
       <main className="admin-main">

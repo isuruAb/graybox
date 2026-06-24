@@ -17,7 +17,17 @@ const AlertsPage = () => {
           />
         </Link>
 
-        <p className="text-16-semibold">Patient Alerts</p>
+        <nav className="flex items-center gap-6">
+          <Link
+            href="/admin"
+            className="text-16-semibold text-dark-700 transition-colors hover:text-white"
+          >
+            Admin Dashboard
+          </Link>
+          <Link href="/admin/alert" className="text-16-semibold text-white">
+            Alerts
+          </Link>
+        </nav>
       </header>
 
       <main className="admin-main">
