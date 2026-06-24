@@ -31,7 +31,22 @@ export const createAlert = async (alert: CreateAlertParams) => {
   }
 };
 
-export const getAlerts = async () => {
+const computeAlertCounts = (documents: Alert[]) => {
+  const initialCounts = {
+    criticalCount: 0,
+    openCount: 0,
+    resolvedCount: 0,
+  };
+
+  return documents.reduce((acc, alert) => {
+    if (alert.severity === "high") acc.criticalCount++;
+    if (alert.status === "Open") acc.openCount++;
+    if (alert.status === "Resolved") acc.resolvedCount++;
+    return acc;
+  }, initialCounts);
+};
+
+export const getAlertStats = async () => {
   try {
     const alerts = await databases.listDocuments(
       DATABASE_ID!,
@@ -39,22 +54,32 @@ export const getAlerts = async () => {
       [Query.orderDesc("$createdAt")]
     );
 
-    const initialCounts = {
-      criticalCount: 0,
-      openCount: 0,
-      resolvedCount: 0,
-    };
+    return parseStringify({
+      totalCount: alerts.total,
+      ...computeAlertCounts(alerts.documents as Alert[]),
+    });
+  } catch (error) {
+    console.error("An error occurred while retrieving alert stats:", error);
+    throw error;
+  }
+};
 
-    const counts = (alerts.documents as Alert[]).reduce((acc, alert) => {
-      if (alert.severity === "high") acc.criticalCount++;
-      if (alert.status === "Open") acc.openCount++;
-      if (alert.status === "Resolved") acc.resolvedCount++;
-      return acc;
-    }, initialCounts);
+export const getAlerts = async (patientName?: string) => {
+  try {
+    const queries = [Query.orderDesc("$createdAt")];
+
+    if (patientName?.trim()) {
+      queries.unshift(Query.search("patientName", patientName.trim()));
+    }
+
+    const alerts = await databases.listDocuments(
+      DATABASE_ID!,
+      ALERT_COLLECTION_ID!,
+      queries
+    );
 
     return parseStringify({
       totalCount: alerts.total,
-      ...counts,
       documents: alerts.documents as Alert[],
     });
   } catch (error) {
