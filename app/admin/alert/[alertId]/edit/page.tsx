@@ -27,7 +27,7 @@ const EditAlertPage = ({ params: { alertId } }: SearchParamProps) => {
           className="text-14-regular flex w-full max-w-screen-sm items-center gap-1.5 self-start text-dark-700 transition-colors hover:text-white"
         >
           <ArrowLeft className="size-4" />
-          Alert Dashboard
+          Alerts Dashboard
         </Link>
 
         <section className="w-full max-w-screen-sm space-y-4">

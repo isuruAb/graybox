@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -25,6 +26,14 @@ const CreateAlertPage = async () => {
       </header>
 
       <main className="admin-main">
+        <Link
+          href="/admin/alert"
+          className="text-14-regular flex w-full max-w-[640px] items-center gap-1.5 self-start text-dark-700 transition-colors hover:text-white"
+        >
+          <ArrowLeft className="size-4" />
+          Alerts Dashboard
+        </Link>
+
         <section className="w-full max-w-[640px] space-y-4">
           <h1 className="header">New Alert</h1>
           <p className="text-dark-700">
