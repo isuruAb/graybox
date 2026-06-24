@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import {
   createAlert,
@@ -9,6 +10,7 @@ import {
   getAlerts,
   updateAlert,
 } from "@/lib/actions/alert.actions";
+import { ALERTS_CHANNEL, client } from "@/lib/appwrite-client";
 import { Alert } from "@/types/appwrite.types";
 
 export type AlertsList = Awaited<ReturnType<typeof getAlerts>>;
@@ -28,6 +30,37 @@ export const useAlerts = () =>
     queryFn: () => getAlerts(),
   });
 
+export const useAlertsRealtime = () => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    console.log("[realtime] subscribing to", ALERTS_CHANNEL);
+
+    const unsubscribe = client.subscribe<Alert>(ALERTS_CHANNEL, (response) => {
+      console.log("[realtime] event received", response.events, response.payload);
+
+      const alert = response.payload;
+
+      const isDeleted = response.events.some((event) =>
+        event.endsWith(".delete")
+      );
+
+      if (isDeleted) {
+        queryClient.removeQueries({ queryKey: alertKeys.detail(alert.$id) });
+      } else {
+        queryClient.setQueryData(alertKeys.detail(alert.$id), alert);
+      }
+
+      queryClient.invalidateQueries({ queryKey: alertKeys.list() });
+    });
+
+    return () => {
+      console.log("[realtime] unsubscribing");
+      unsubscribe();
+    };
+  }, [queryClient]);
+};
+
 export const useAlert = (alertId: string) => {
   const queryClient = useQueryClient();
 
@@ -46,7 +79,6 @@ export const useAlert = (alertId: string) => {
     enabled: Boolean(alertId) && !hasCachedAlert,
     initialData: cachedAlert,
     staleTime: hasCachedAlert ? Infinity : 0,
-    refetchOnMount: !hasCachedAlert,
   });
 };
 

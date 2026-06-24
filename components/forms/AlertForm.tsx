@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -19,19 +18,75 @@ import {
   AlertFormValidation,
   AlertStatusEditValidation,
 } from "@/lib/validation";
-import { Patient } from "@/types/appwrite.types";
+import { Alert, Patient } from "@/types/appwrite.types";
 
-export const AlertForm = ({
-  patients = [],
-  alertId,
-}: {
-  patients?: Patient[];
-  alertId?: string;
-}) => {
-  const isEdit = !!alertId;
-  const { data: alert, isPending: isAlertLoading } = useAlert(alertId ?? "");
-  const createAlertMutation = useCreateAlert();
+const EditAlertForm = ({ alert }: { alert: Alert }) => {
   const updateAlertMutation = useUpdateAlert();
+
+  const editForm = useForm<z.infer<typeof AlertStatusEditValidation>>({
+    resolver: zodResolver(AlertStatusEditValidation),
+    defaultValues: {
+      status: alert.status,
+    },
+  });
+
+  const onEditSubmit = (values: z.infer<typeof AlertStatusEditValidation>) => {
+    updateAlertMutation.mutate({ alertId: alert.$id, status: values.status });
+  };
+
+  return (
+    <div className="w-full space-y-6">
+      <div className="space-y-4 rounded-lg border border-dark-400 bg-dark-300 p-6">
+        <div className="space-y-1">
+          <p className="shad-input-label">Patient Name</p>
+          <p className="text-14-medium text-white">{alert.patientName}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="shad-input-label">Alert Type</p>
+          <p className="text-14-regular text-white">{alert.alertType}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="shad-input-label">Severity</p>
+          <p className="text-14-regular capitalize text-white">
+            {alert.severity}
+          </p>
+        </div>
+        <div className="space-y-1">
+          <p className="shad-input-label">Description</p>
+          <p className="text-14-regular text-white">{alert.description}</p>
+        </div>
+      </div>
+
+      <Form {...editForm}>
+        <form
+          onSubmit={editForm.handleSubmit(onEditSubmit)}
+          className="w-full space-y-6"
+        >
+          <CustomFormField
+            fieldType={FormFieldType.SELECT}
+            control={editForm.control}
+            name="status"
+            label="Status"
+            placeholder="Select status"
+          >
+            {AlertStatusOptions.map((status) => (
+              <SelectItem key={status} value={status}>
+                {status}
+              </SelectItem>
+            ))}
+          </CustomFormField>
+
+          <SubmitButton isLoading={updateAlertMutation.isPending}>
+            Update Alert
+          </SubmitButton>
+        </form>
+      </Form>
+    </div>
+  );
+};
+
+const CreateAlertForm = ({ patients }: { patients: Patient[] }) => {
+  const createAlertMutation = useCreateAlert();
 
   const createForm = useForm<z.infer<typeof AlertFormValidation>>({
     resolver: zodResolver(AlertFormValidation),
@@ -43,88 +98,9 @@ export const AlertForm = ({
     },
   });
 
-  const editForm = useForm<z.infer<typeof AlertStatusEditValidation>>({
-    resolver: zodResolver(AlertStatusEditValidation),
-    defaultValues: {
-      status: "Open",
-    },
-  });
-
-  useEffect(() => {
-    if (alert?.status) {
-      editForm.reset({ status: alert.status });
-    }
-  }, [alert, editForm]);
-
   const onCreateSubmit = (values: z.infer<typeof AlertFormValidation>) => {
     createAlertMutation.mutate(values);
   };
-
-  const onEditSubmit = (values: z.infer<typeof AlertStatusEditValidation>) => {
-    if (alertId) {
-      updateAlertMutation.mutate({ alertId, status: values.status });
-    }
-  };
-
-  if (isEdit) {
-    if (isAlertLoading) {
-      return <p className="text-dark-700">Loading alert...</p>;
-    }
-
-    if (!alert) {
-      return <p className="text-red-400">Alert not found.</p>;
-    }
-
-    return (
-      <div className="w-full space-y-6">
-        <div className="space-y-4 rounded-lg border border-dark-400 bg-dark-300 p-6">
-          <div className="space-y-1">
-            <p className="shad-input-label">Patient Name</p>
-            <p className="text-14-medium text-white">{alert.patientName}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="shad-input-label">Alert Type</p>
-            <p className="text-14-regular text-white">{alert.alertType}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="shad-input-label">Severity</p>
-            <p className="text-14-regular capitalize text-white">
-              {alert.severity}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="shad-input-label">Description</p>
-            <p className="text-14-regular text-white">{alert.description}</p>
-          </div>
-        </div>
-
-        <Form {...editForm}>
-          <form
-            onSubmit={editForm.handleSubmit(onEditSubmit)}
-            className="w-full space-y-6"
-          >
-            <CustomFormField
-              fieldType={FormFieldType.SELECT}
-              control={editForm.control}
-              name="status"
-              label="Status"
-              placeholder="Select status"
-            >
-              {AlertStatusOptions.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </CustomFormField>
-
-            <SubmitButton isLoading={updateAlertMutation.isPending}>
-              Update Alert
-            </SubmitButton>
-          </form>
-        </Form>
-      </div>
-    );
-  }
 
   return (
     <Form {...createForm}>
@@ -188,4 +164,29 @@ export const AlertForm = ({
       </form>
     </Form>
   );
+};
+
+export const AlertForm = ({
+  patients = [],
+  alertId,
+}: {
+  patients?: Patient[];
+  alertId?: string;
+}) => {
+  const isEdit = !!alertId;
+  const { data: alert, isPending: isAlertLoading } = useAlert(alertId ?? "");
+
+  if (isEdit) {
+    if (isAlertLoading) {
+      return <p className="text-dark-700">Loading alert...</p>;
+    }
+
+    if (!alert) {
+      return <p className="text-red-400">Alert not found.</p>;
+    }
+
+    return <EditAlertForm alert={alert} />;
+  }
+
+  return <CreateAlertForm patients={patients} />;
 };

@@ -3,10 +3,12 @@
 import { StatCard } from "@/components/StatCard";
 import { alertColumns } from "@/components/table/alertColumns";
 import { DataTable } from "@/components/table/DataTable";
-import { useAlerts } from "@/hooks/useAlerts";
+import { useAlerts, useAlertsRealtime } from "@/hooks/useAlerts";
 
 export const AlertsDashboard = () => {
   const { data: alerts, isPending, isError, refetch } = useAlerts();
+
+  useAlertsRealtime();
 
   if (isPending) {
     return <p className="text-dark-700">Loading alerts...</p>;
