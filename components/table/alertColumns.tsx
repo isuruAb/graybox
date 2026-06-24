@@ -1,10 +1,9 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
 
 import { AlertSeverityBadge, AlertStatusBadge } from "@/components/AlertBadge";
-import { Button } from "@/components/ui/button";
+import { EditAlertButton } from "@/components/EditAlertButton";
 import { formatDateTime } from "@/lib/utils";
 import { Alert } from "@/types/appwrite.types";
 
@@ -66,14 +65,6 @@ export const alertColumns: ColumnDef<Alert>[] = [
   {
     id: "actions",
     header: () => <div className="pl-4">Actions</div>,
-    cell: ({ row }) => {
-      return (
-        <Link href={`/admin/alert/${row.original.$id}/edit`}>
-          <Button size="sm" className="shad-gray-btn">
-            Edit
-          </Button>
-        </Link>
-      );
-    },
+    cell: ({ row }) => <EditAlertButton alert={row.original} />,
   },
 ];

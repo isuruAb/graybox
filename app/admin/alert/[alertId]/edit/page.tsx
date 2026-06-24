@@ -1,19 +1,10 @@
+import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 
 import { AlertForm } from "@/components/forms/AlertForm";
-import { getAlert } from "@/lib/actions/alert.actions";
-import { Alert } from "@/types/appwrite.types";
 
-const EditAlertPage = async ({
-  params: { alertId },
-}: SearchParamProps) => {
-  //TODO: Get it from the globalstate
-  const alert = await getAlert(alertId);
-
-  if (!alert) notFound();
-
+const EditAlertPage = ({ params: { alertId } }: SearchParamProps) => {
   return (
     <div className="mx-auto flex max-w-7xl flex-col space-y-14">
       <header className="admin-header">
@@ -31,13 +22,21 @@ const EditAlertPage = async ({
       </header>
 
       <main className="admin-main">
-        <section className="w-full max-w-[640px] space-y-4">
+        <Link
+          href="/admin/alert"
+          className="text-14-regular flex w-full max-w-screen-sm items-center gap-1.5 self-start text-dark-700 transition-colors hover:text-white"
+        >
+          <ArrowLeft className="size-4" />
+          Alert Dashboard
+        </Link>
+
+        <section className="w-full max-w-screen-sm space-y-4">
           <h1 className="header">Edit Alert</h1>
           <p className="text-dark-700">Update the patient alert details</p>
         </section>
 
-        <section className="w-full max-w-[640px]">
-          <AlertForm alert={alert as Alert} />
+        <section className="w-full max-w-screen-sm">
+          <AlertForm alertId={alertId} />
         </section>
       </main>
     </div>

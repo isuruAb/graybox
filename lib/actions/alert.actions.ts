@@ -45,15 +45,12 @@ export const getAlerts = async () => {
       resolvedCount: 0,
     };
 
-    const counts = (alerts.documents as Alert[]).reduce(
-      (acc, alert) => {
-        if (alert.severity === "high") acc.criticalCount++;
-        if (alert.status === "Open") acc.openCount++;
-        if (alert.status === "Resolved") acc.resolvedCount++;
-        return acc;
-      },
-      initialCounts
-    );
+    const counts = (alerts.documents as Alert[]).reduce((acc, alert) => {
+      if (alert.severity === "high") acc.criticalCount++;
+      if (alert.status === "Open") acc.openCount++;
+      if (alert.status === "Resolved") acc.resolvedCount++;
+      return acc;
+    }, initialCounts);
 
     return parseStringify({
       totalCount: alerts.total,
@@ -62,6 +59,7 @@ export const getAlerts = async () => {
     });
   } catch (error) {
     console.error("An error occurred while retrieving alerts:", error);
+    throw error;
   }
 };
 

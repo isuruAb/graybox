@@ -1,14 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { StatCard } from "@/components/StatCard";
-import { alertColumns } from "@/components/table/alertColumns";
-import { DataTable } from "@/components/table/DataTable";
-import { getAlerts } from "@/lib/actions/alert.actions";
+import { AlertsDashboard } from "@/components/AlertsDashboard";
 
-const AlertsPage = async () => {
-  const alerts = await getAlerts();
-
+const AlertsPage = () => {
   return (
     <div className="mx-auto flex max-w-7xl flex-col space-y-14">
       <header className="admin-header">
@@ -41,28 +36,7 @@ const AlertsPage = async () => {
           </p>
         </section>
 
-        <section className="admin-stat">
-          <StatCard
-            type="cancelled"
-            count={alerts?.criticalCount ?? 0}
-            label="Critical alerts"
-            icon={"/assets/icons/cancelled.svg"}
-          />
-          <StatCard
-            type="pending"
-            count={alerts?.openCount ?? 0}
-            label="Open alerts"
-            icon={"/assets/icons/pending.svg"}
-          />
-          <StatCard
-            type="appointments"
-            count={alerts?.resolvedCount ?? 0}
-            label="Resolved alerts"
-            icon={"/assets/icons/check.svg"}
-          />
-        </section>
-
-        <DataTable columns={alertColumns} data={alerts?.documents ?? []} />
+        <AlertsDashboard />
       </main>
     </div>
   );

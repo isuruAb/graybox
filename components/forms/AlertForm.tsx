@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -15,23 +14,24 @@ import {
   AlertStatusOptions,
   AlertTypes,
 } from "@/constants";
-import { createAlert, updateAlert } from "@/lib/actions/alert.actions";
+import { useAlert, useCreateAlert, useUpdateAlert } from "@/hooks/useAlerts";
 import {
   AlertFormValidation,
   AlertStatusEditValidation,
 } from "@/lib/validation";
-import { Alert, Patient } from "@/types/appwrite.types";
+import { Patient } from "@/types/appwrite.types";
 
 export const AlertForm = ({
   patients = [],
-  alert,
+  alertId,
 }: {
   patients?: Patient[];
-  alert?: Alert;
+  alertId?: string;
 }) => {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const isEdit = !!alert;
+  const isEdit = !!alertId;
+  const { data: alert, isPending: isAlertLoading } = useAlert(alertId ?? "");
+  const createAlertMutation = useCreateAlert();
+  const updateAlertMutation = useUpdateAlert();
 
   const createForm = useForm<z.infer<typeof AlertFormValidation>>({
     resolver: zodResolver(AlertFormValidation),
@@ -46,53 +46,35 @@ export const AlertForm = ({
   const editForm = useForm<z.infer<typeof AlertStatusEditValidation>>({
     resolver: zodResolver(AlertStatusEditValidation),
     defaultValues: {
-      status: alert?.status ?? "Open",
+      status: "Open",
     },
   });
 
-  const onCreateSubmit = async (
-    values: z.infer<typeof AlertFormValidation>
-  ) => {
-    setIsLoading(true);
-
-    try {
-      const newAlert = await createAlert(values);
-
-      if (newAlert) {
-        createForm.reset();
-        router.push("/admin/alert");
-      }
-    } catch (error) {
-      console.log(error);
+  useEffect(() => {
+    if (alert?.status) {
+      editForm.reset({ status: alert.status });
     }
+  }, [alert, editForm]);
 
-    setIsLoading(false);
+  const onCreateSubmit = (values: z.infer<typeof AlertFormValidation>) => {
+    createAlertMutation.mutate(values);
   };
 
-  const onEditSubmit = async (
-    values: z.infer<typeof AlertStatusEditValidation>
-  ) => {
-    setIsLoading(true);
-
-    try {
-      if (alert) {
-        const updatedAlert = await updateAlert({
-          alertId: alert.$id,
-          status: values.status,
-        });
-
-        if (updatedAlert) {
-          router.push("/admin/alert");
-        }
-      }
-    } catch (error) {
-      console.log(error);
+  const onEditSubmit = (values: z.infer<typeof AlertStatusEditValidation>) => {
+    if (alertId) {
+      updateAlertMutation.mutate({ alertId, status: values.status });
     }
-
-    setIsLoading(false);
   };
 
-  if (isEdit && alert) {
+  if (isEdit) {
+    if (isAlertLoading) {
+      return <p className="text-dark-700">Loading alert...</p>;
+    }
+
+    if (!alert) {
+      return <p className="text-red-400">Alert not found.</p>;
+    }
+
     return (
       <div className="w-full space-y-6">
         <div className="space-y-4 rounded-lg border border-dark-400 bg-dark-300 p-6">
@@ -135,7 +117,9 @@ export const AlertForm = ({
               ))}
             </CustomFormField>
 
-            <SubmitButton isLoading={isLoading}>Update Alert</SubmitButton>
+            <SubmitButton isLoading={updateAlertMutation.isPending}>
+              Update Alert
+            </SubmitButton>
           </form>
         </Form>
       </div>
@@ -198,7 +182,9 @@ export const AlertForm = ({
           placeholder="Describe the alert details..."
         />
 
-        <SubmitButton isLoading={isLoading}>Create Alert</SubmitButton>
+        <SubmitButton isLoading={createAlertMutation.isPending}>
+          Create Alert
+        </SubmitButton>
       </form>
     </Form>
   );
