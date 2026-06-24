@@ -64,12 +64,24 @@ export const getAlertStats = async () => {
   }
 };
 
-export const getAlerts = async (patientName?: string) => {
+export const getAlerts = async (filters?: {
+  patientName?: string;
+  severity?: AlertSeverity;
+  status?: AlertStatus;
+}) => {
   try {
     const queries = [Query.orderDesc("$createdAt")];
 
-    if (patientName?.trim()) {
-      queries.unshift(Query.search("patientName", patientName.trim()));
+    if (filters?.patientName?.trim()) {
+      queries.unshift(Query.search("patientName", filters.patientName.trim()));
+    }
+
+    if (filters?.severity) {
+      queries.unshift(Query.equal("severity", filters.severity));
+    }
+
+    if (filters?.status) {
+      queries.unshift(Query.equal("status", filters.status));
     }
 
     const alerts = await databases.listDocuments(

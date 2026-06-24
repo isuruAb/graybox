@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeResponseEvent } from "appwrite";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 import {
@@ -19,15 +19,42 @@ import { Alert } from "@/types/appwrite.types";
 export type AlertsList = Awaited<ReturnType<typeof getAlerts>>;
 export type AlertStats = Awaited<ReturnType<typeof getAlertStats>>;
 
+export type AlertFilters = {
+  patientName?: string;
+  severity?: AlertSeverity;
+  status?: AlertStatus;
+};
+
 export const alertKeys = {
   all: ["alerts"] as const,
   stats: () => [...alertKeys.all, "stats"] as const,
-  search: () => [...alertKeys.all, "search"] as const,
+  search: (filters: AlertFilters = {}) =>
+    [
+      ...alertKeys.all,
+      "search",
+      filters.patientName ?? "",
+      filters.severity ?? "",
+      filters.status ?? "",
+    ] as const,
   detail: () => [...alertKeys.all, "detail"] as const,
 };
 
 const findAlertInList = (alerts: AlertsList | undefined, alertId: string) =>
   alerts?.documents?.find((alert: Alert) => alert.$id === alertId);
+
+const findAlertInCachedLists = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  alertId: string
+) => {
+  const cachedLists = queryClient.getQueriesData<AlertsList>({
+    queryKey: [...alertKeys.all, "search"],
+  });
+
+  for (const [, list] of cachedLists) {
+    const alert = findAlertInList(list, alertId);
+    if (alert) return alert;
+  }
+};
 
 export const useAlertStats = () =>
   useQuery({
@@ -35,22 +62,13 @@ export const useAlertStats = () =>
     queryFn: () => getAlertStats(),
   });
 
-export const useAlerts = (patientName = "") => {
-  const patientNameRef = useRef(patientName);
-  const query = useQuery({
-    queryKey: alertKeys.search(),
-    queryFn: () => getAlerts(patientName),
+export const useAlerts = (filters: AlertFilters = {}) => {
+  const { patientName = "", severity, status } = filters;
+
+  return useQuery({
+    queryKey: alertKeys.search({ patientName, severity, status }),
+    queryFn: () => getAlerts({ patientName, severity, status }),
   });
-
-  const { refetch } = query;
-
-  useEffect(() => {
-    if (patientNameRef.current === patientName) return;
-    patientNameRef.current = patientName;
-    refetch();
-  }, [patientName, refetch]);
-
-  return query;
 };
 
 export const useAlertsRealtime = () => {
@@ -78,10 +96,7 @@ export const useAlert = (alertId: string) => {
 
   const cachedAlert =
     queryClient.getQueryData<Alert>(alertKeys.detail()) ??
-    findAlertInList(
-      queryClient.getQueryData<AlertsList>(alertKeys.search()),
-      alertId
-    );
+    findAlertInCachedLists(queryClient, alertId);
 
   const hasCachedAlert = Boolean(cachedAlert);
 
